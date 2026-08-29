@@ -41,10 +41,10 @@ export default {
 
       options: [{
         key: 'transition',
-        label: 'On Transition',
+        label: '动作切换时',
       }, {
         key: 'continuous',
-        label: 'Continuously',
+        label: '连续随动',
       }],
     };
   },

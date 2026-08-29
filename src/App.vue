@@ -38,7 +38,7 @@
         id="home"
         @click="home()"
       >
-        Home Device
+        设备归位
       </button>
 
       <button
@@ -46,7 +46,7 @@
         :disabled="mode === 'Free Play' || !strokes.length"
         @click="freePlay()"
       >
-        <span>Free Play</span> <span style="font-size: 12px">(Space)</span>
+        <span>自由控制</span> <span style="font-size: 12px">(空格)</span>
       </button>
 
       <button
@@ -54,7 +54,7 @@
         :disabled="mode === 'Stopped'"
         @click="stop"
       >
-        <span>Stop</span> <span style="font-size: 12px">(Esc)</span>
+        <span>停止</span> <span style="font-size: 12px">(Esc)</span>
       </button>
     </div>
 
@@ -74,7 +74,7 @@
         class="label"
         :disabled="bpmDisabled ? '' : null"
       >
-        <span>Current BPM</span>
+        <span>当前 BPM</span>
       </div>
     </div>
 
@@ -193,7 +193,7 @@ export default {
       parameters: {},
       bpmSliderActive: false,
       currentBpm: 60,
-      currentStrokeName: 'None',
+      currentStrokeName: '无',
       bpmDisabled: false,
       bpmAnimationFrame: null,
 
@@ -229,19 +229,19 @@ export default {
 
       settingsDropdownOptions: [{
         key: 'import',
-        label: 'Import Settings',
+        label: '导入设置',
       }, {
         key: 'export',
-        label: 'Export Settings',
+        label: '导出设置',
       }, {
         key: 'release',
-        label: 'Release Notes',
+        label: '更新日志',
       }, {
         key: 'license',
-        label: 'License',
+        label: '许可协议',
       }, {
         key: 'patreon',
-        label: 'Patreon',
+        label: 'Patreon 赞助',
       }],
 
       globalSettings: new Storage('global-settings'),
@@ -457,12 +457,12 @@ export default {
         controller = new AyvaController();
         controller.on('transition-start', (duration, targetBpm) => {
           this.createBpmAnimation(duration, targetBpm);
-          this.currentStrokeName = 'Transitioning...';
+          this.currentStrokeName = '过渡中...';
           this.bpmDisabled = true;
         });
 
         controller.on('transition-end', (stroke, bpm) => {
-          this.currentStrokeName = typeof stroke === 'string' ? stroke : 'Custom';
+          this.currentStrokeName = typeof stroke === 'string' ? stroke : '自定义';
           this.bpmDisabled = false;
           this.clearBpmAnimation();
           if (bpm) {
@@ -485,7 +485,7 @@ export default {
         controller.on('script-error', (scriptName, error) => {
           ayva.stop();
           this.notify.error({
-            content: `Exception occurred while running script ${scriptName}:`,
+            content: `运行脚本 ${scriptName} 时发生异常：`,
             meta: error.message,
           });
         });
@@ -507,7 +507,7 @@ export default {
     onAyvaStop () {
       controller = null;
       this.mode = 'Stopped';
-      this.currentStrokeName = 'None';
+      this.currentStrokeName = '无';
       this.bpmDisabled = false;
       this.clearBpmAnimation();
     },

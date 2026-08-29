@@ -33,7 +33,7 @@ export default {
     },
 
     connectedText () {
-      return this.connected ? 'Connected' : 'Disconnected';
+      return this.connected ? '已连接' : '未连接';
     },
   },
 };

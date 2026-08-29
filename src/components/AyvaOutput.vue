@@ -1,7 +1,7 @@
 <template>
   <div class="limits-container lil-gui root">
     <div class="title" style="padding-right: 0">
-      <span>Output</span>
+      <span>设备输出</span>
 
       <ayva-connected
         :connected="device.connected"
@@ -21,7 +21,7 @@
           :class="axis"
         >
           <div class="axis">
-            {{ axis }}
+            {{ { stroke: '抽插', surge: '前后平移', sway: '左右平移', twist: '旋转', roll: '侧倾', pitch: '俯仰' }[axis] || axis }}
           </div>
           <ayva-slider
             :options="sliderOptions"

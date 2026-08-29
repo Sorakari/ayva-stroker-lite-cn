@@ -2,15 +2,15 @@
   <div class="free-play">
     <div class="free-play-container lil-gui root">
       <div class="title">
-        <span>Parameters</span>
+        <span>参数设置</span>
         <span class="guide" @click.stop>
-          <a href="https://ayvajs.github.io/ayvajs-docs/tutorial-ayva-stroker-lite.html" target="_blank">Help</a>
+          <a href="https://ayvajs.github.io/ayvajs-docs/tutorial-ayva-stroker-lite.html" target="_blank">帮助</a>
         </span>
       </div>
       <div class="limits lil-gui children">
         <div class="limit">
           <div class="axis">
-            Change BPM
+            BPM 变化模式
           </div>
           <ayva-bpm-select
             v-model="bpmMode"
@@ -21,7 +21,7 @@
 
         <div class="limit">
           <div class="axis">
-            BPM Range
+            BPM 范围
           </div>
           <ayva-slider
             :options="bpmOptions"
@@ -32,7 +32,7 @@
 
         <div class="limit">
           <div class="axis" :disabled="disableAcceleration">
-            Acceleration (bpm/s)
+            加速度 (bpm/s)
           </div>
           <ayva-slider
             :options="accelerationOptions"
@@ -44,7 +44,7 @@
 
         <div class="limit">
           <div class="axis">
-            Pattern Duration
+            模式持续时间
           </div>
           <ayva-slider
             :options="patternDurationOptions"
@@ -55,7 +55,7 @@
 
         <div class="limit">
           <div class="axis">
-            Transition Duration
+            过渡时间
           </div>
           <ayva-slider
             :options="transitionDurationOptions"
@@ -66,7 +66,7 @@
 
         <div class="limit twist">
           <div class="axis">
-            Default Twist
+            默认旋转
           </div>
           <div>
             <ayva-checkbox v-model="twist" storage-key="free-play-enable-twist" />
@@ -78,7 +78,7 @@
             class="axis"
             :disabled="disableTwist"
           >
-            Twist Range
+            旋转范围
           </div>
 
           <ayva-slider
@@ -94,7 +94,7 @@
             class="axis"
             :disabled="disableTwist"
           >
-            Twist Phase
+            旋转相位
           </div>
           <ayva-slider
             :options="twistPhaseOptions"
@@ -109,7 +109,7 @@
             class="axis"
             :disabled="disableTwist"
           >
-            Twist Eccentricity
+            旋转偏心率
           </div>
           <ayva-slider
             :options="twistEccOptions"
@@ -122,12 +122,12 @@
     </div>
     <div ref="strokesContainer" class="free-play-container lil-gui root">
       <div class="title">
-        <span>Strokes</span>
-        <span v-show="currentStrokeName !== 'None'" class="current-stroke-container">
-          <span class="label">Playing:</span>
-          <span class="current-stroke">{{ currentStrokeName }}</span>
+        <span>抽插模式</span>
+        <span v-show="currentStrokeName !== 'None' && currentStrokeName !== '无'" class="current-stroke-container">
+          <span class="label">播放中：</span>
+          <span class="current-stroke">{{ translateStrokeName(currentStrokeName) }}</span>
         </span>
-        <span v-show="currentStrokeName === 'None'" class="settings-container" @click.stop>
+        <span v-show="currentStrokeName === 'None' || currentStrokeName === '无'" class="settings-container" @click.stop>
           <n-dropdown
             placement="bottom-start"
             trigger="click"
@@ -152,7 +152,7 @@
             </div>
             <div>
               <div class="info">
-                Select or manually trigger a stroke.
+                选择或手动触发一个抽插模式。
               </div>
             </div>
             <div class="stroke-actions" />
@@ -167,8 +167,8 @@
                 />
               </div>
               <div>
-                <button :title="stroke.name" @click="fireSelectStroke(stroke.name)">
-                  {{ stroke.name }}
+                <button :title="translateStrokeName(stroke.name)" @click="fireSelectStroke(stroke.name)">
+                  {{ translateStrokeName(stroke.name) }}
                 </button>
               </div>
               <div class="stroke-actions">
@@ -352,27 +352,27 @@ export default {
 
       settingsOptions: [{
         key: 'create-stroke',
-        label: 'Create TempestStroke',
+        label: '创建抽插模式 (TempestStroke)',
       }, {
         key: 'create-script',
-        label: 'Create AyvaScript',
+        label: '创建动作脚本 (AyvaScript)',
       }, {
         key: 'import',
-        label: 'Import',
+        label: '导入',
       }, {
         key: 'export',
-        label: 'Export',
+        label: '导出',
       }],
 
       customStrokeActions: [{
         key: 'edit',
-        label: 'Edit',
+        label: '编辑',
       }, {
         key: 'export',
-        label: 'Export',
+        label: '导出',
       }, {
         key: 'delete',
-        label: 'Delete',
+        label: '删除',
       }],
     };
   },
@@ -499,7 +499,7 @@ export default {
       } else if (key === 'import') {
         const onConflicts = (conflicts) => {
           this.notify.warning({
-            content: 'Some strokes renamed due to conflicts:',
+            content: '由于命名冲突，部分动作已重命名：',
             meta: () => h('div', conflicts.map((c) => h('div', c))),
           });
         };
@@ -509,7 +509,7 @@ export default {
         }).catch((error) => {
           console.error(error?.stack); // eslint-disable-line no-console
           this.notify.error({
-            content: 'Error importing stroke:',
+            content: '导入动作时出错：',
             meta: error.message,
           });
         });
@@ -649,6 +649,54 @@ export default {
         previewEmulator = new OSREmulator(this.previewElement, { model: this.deviceType });
       }
     },
+
+    translateStrokeName (name) {
+      const map = {
+        'down-forward': '下压-前倾',
+        'down-backward': '下压-后仰',
+        'back-thrust-down': '向后猛插-下压',
+        'back-thrust-down-swirl': '向后猛插-下压(附带旋涡)',
+        'thrust-forward': '向前猛插',
+        'thrust-forward-swirl': '向前猛插(附带旋涡)',
+        'lean-forward-thrust-down': '前倾-向下猛插',
+        'lean-forward-thrust-down-swirl': '前倾-向下猛插(附带旋涡)',
+        'diagonal-down-back': '对角-下压-后仰',
+        'diagonal-down-forward': '对角-下压-前倾',
+        'orbit-tease': '环绕-挑逗',
+        'left-right-tease': '左右摇摆-挑逗',
+        'forward-back-tease': '前后摇摆-挑逗',
+        'vortex-tease': '涡流-挑逗',
+        'swirl-tease': '旋涡-挑逗',
+        'forward-back-grind': '前后研磨',
+        'orbit-grind': '环绕研磨',
+        'short-low-roll-forward': '短促-低位侧倾-前倾',
+        'short-low-roll-backward': '短促-低位侧倾-后仰',
+        'short-mid-roll-forward': '短促-中位侧倾-前倾',
+        'short-mid-roll-backward': '短促-中位侧倾-后仰',
+        'short-high-roll-backward': '短促-高位侧倾-后仰',
+        'short-high-roll-forward': '短促-高位侧倾-前倾',
+        'long-stroke-1': '长距离抽插-1',
+        'long-stroke-2': '长距离抽插-2',
+        'long-stroke-3': '长距离抽插-3',
+        'long-stroke-4': '长距离抽插-4',
+        'long-stroke-5': '长距离抽插-5',
+        'grind-circular': '圆周研磨',
+        'grind-vortex': '涡流研磨',
+        'grind-forward-back': '前后研磨',
+        'grind-forward-back-phased': '相位式前后研磨',
+        'grind-forward-back-tilt': '倾斜前后研磨',
+        'grind-forward-tilt': '前倾研磨',
+        'tease-orbit-right': '挑逗-右环绕',
+        'tease-orbit-left': '挑逗-左环绕',
+        'tease-left-right-rock': '挑逗-左右摇摆',
+        'tease-down-back': '挑逗-下压-后仰',
+        'tease-back-swirl-right': '挑逗-后仰-右旋涡',
+        'tease-back-swirl-left': '挑逗-后仰-左旋涡',
+        'tease-up-down-circle-right': '挑逗-上下右圆周',
+        'tease-up-down-circle-left': '挑逗-上下左圆周'
+      };
+      return map[name] || name;
+    }
   },
 };
 </script>

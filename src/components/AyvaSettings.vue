@@ -3,7 +3,7 @@
     <div>
       <div class="toolbar">
         <span class="toolbar-left">
-          <span>Output Settings</span>
+          <span>输出设置</span>
         </span>
         <span class="toolbar-right">
           <span>
@@ -18,13 +18,13 @@
       <div class="limits lil-gui children">
         <div class="settings">
           <div class="settings-label">
-            Device:
+            设备类型:
           </div>
           <ayva-dropdown v-model="deviceType" class="device-type" :options="deviceTypeOptions" storage-key="device-type" />
         </div>
         <div class="settings">
           <div class="settings-label">
-            Connection:
+            连接方式:
           </div>
           <template v-if="['HANDY', 'KEON', 'RUBJOY'].includes(deviceType)">
             <div class="connection-type">
@@ -37,34 +37,34 @@
         </div>
         <div v-show="connectionType === 'websocket'" class="settings">
           <div class="settings-label">
-            Host:
+            主机地址 (Host):
           </div>
           <div>
             <n-tooltip :show="hostInvalid" class="error-tooltip">
               <template #trigger>
                 <input v-model="host" class="host" :class="hostInvalid ? 'error' : ''">
               </template>
-              Host cannot be blank.
+              主机地址不能为空。
             </n-tooltip>
           </div>
         </div>
         <div v-show="connectionType === 'websocket'" class="settings">
           <div class="settings-label">
-            Port:
+            端口 (Port):
           </div>
           <div>
             <n-tooltip :show="portInvalid" class="error-tooltip">
               <template #trigger>
                 <input v-model="port" class="port" :class="portInvalid ? 'error' : ''" maxlength="5" @keydown="restrictNumbers">
               </template>
-              Port must be a number between 1 and 65535.
+              端口必须是 1 到 65535 之间的数字。
             </n-tooltip>
           </div>
         </div>
         <div v-show="connectionType === 'websocket'" class="settings">
           <div style="grid-column: span 2; font-size: 14px; text-align: center; color: var(--ayva-color-error);">
-            Note: There currently is no firmware available that supports a secure WebSocket.
-            You must connect to another application running on localhost, such as<br>
+            注意：当前没有固件支持安全 WebSocket。
+            您必须连接到运行在 localhost 上的其他应用程序，例如：<br>
             <a
               href="https://osr.wiki/books/ayva-websocket-hub/page/overview"
               target="_blank"
@@ -114,16 +114,16 @@ export default {
 
       connectionTypeOptions: [{
         key: 'serial',
-        label: 'Serial',
+        label: '串口 (Serial)',
       }, {
         key: 'ble',
-        label: 'Bluetooth LE',
+        label: '蓝牙 (BLE)',
       }, {
         key: 'websocket',
         label: 'WebSocket',
       }, {
         key: 'console',
-        label: 'Console',
+        label: '控制台 (Console)',
       }],
 
       connectionType: 'serial',

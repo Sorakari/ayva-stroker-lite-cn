@@ -1,10 +1,10 @@
 <template>
   <div class="mode-container lil-gui">
-    <span>Mode:</span>
+    <span>当前模式:</span>
     <span
       class="mode"
       :class="modeClass"
-    >{{ mode }}</span>
+    >{{ { 'Stopped': '已停止', 'Free Play': '自由控制', 'Manual': '手动' }[mode] || mode }}</span>
   </div>
 </template>
 
