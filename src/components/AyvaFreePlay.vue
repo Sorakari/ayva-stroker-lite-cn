@@ -24,6 +24,7 @@
             BPM 范围
           </div>
           <ayva-slider
+            ref="bpmSlider"
             :options="bpmOptions"
             storage-key="free-play-bpm"
             @update="onUpdate('bpm', $event)"
@@ -35,6 +36,7 @@
             加速度 (bpm/s)
           </div>
           <ayva-slider
+            ref="accelerationSlider"
             :options="accelerationOptions"
             :disabled="disableAcceleration"
             storage-key="free-play-acceleration"
@@ -47,6 +49,7 @@
             模式持续时间
           </div>
           <ayva-slider
+            ref="patternDurationSlider"
             :options="patternDurationOptions"
             storage-key="free-play-pattern-duration"
             @update="onUpdate('pattern-duration', $event)"
@@ -58,6 +61,7 @@
             过渡时间
           </div>
           <ayva-slider
+            ref="transitionDurationSlider"
             :options="transitionDurationOptions"
             storage-key="free-play-transition-duration"
             @update="onUpdate('transition-duration', $event)"
@@ -227,6 +231,7 @@ import {
   makeCollapsible, formatter, clampHeight
 } from '../lib/util.js';
 import CustomBehaviorStorage from '../lib/custom-behavior-storage.js';
+import PHASE_STROKES, { PHASE_CONFIGS } from '../lib/phase-stroke-map.js';
 
 let previewAyva = null;
 let previewEmulator = null;
@@ -244,7 +249,7 @@ export default {
     AyvaModal,
   },
 
-  inject: ['globalAyva', 'deviceType', 'createRubjoyEmulator'],
+  inject: ['globalAyva', 'deviceType', 'createRubjoyEmulator', 'globalEvents'],
 
   props: {
     currentStrokeName: {
@@ -277,7 +282,7 @@ export default {
           max: 200,
         },
         start: [20, 60],
-        padding: [10],
+        padding: [5],
         step: 1,
         format: formatter(),
       },
@@ -296,7 +301,7 @@ export default {
           max: 30,
         },
         start: [5, 10],
-        padding: [1],
+        padding: [0],
         step: 0.1,
         format: formatter(1, 's'),
       },
@@ -306,7 +311,7 @@ export default {
           max: 30,
         },
         start: [2, 5],
-        padding: [0.5],
+        padding: [0.1],
         step: 0.1,
         format: formatter(1, 's'),
       },
@@ -440,10 +445,13 @@ export default {
     this.onResize();
 
     this.fireUpdateParameter('bpm-mode', this.bpmMode);
+
+    this.globalEvents?.on('filter-strokes-by-phase', this.onFilterStrokesByPhase);
   },
 
   unmounted () {
     window.removeEventListener('resize', this.onResize);
+    this.globalEvents?.off('filter-strokes-by-phase', this.onFilterStrokesByPhase);
   },
 
   methods: {
@@ -563,6 +571,51 @@ export default {
       this.$emit('update-strokes', selectedStrokes);
     },
 
+    onFilterStrokesByPhase (phaseKey) {
+      const allowedStrokes = PHASE_STROKES[phaseKey];
+      if (!allowedStrokes) return;
+
+      this.strokes.forEach((stroke) => {
+        stroke.enabled = allowedStrokes.includes(stroke.name);
+      });
+      this.fireUpdateStrokes();
+
+      // 联动应用当前阶段对应的 BPM 范围、连续随动加速度、模式持续时间与过渡时间
+      const phaseConfig = PHASE_CONFIGS[phaseKey];
+      if (phaseConfig) {
+        nextTick(() => {
+          if (phaseConfig.bpm) {
+            if (this.$refs.bpmSlider) {
+              this.$refs.bpmSlider.set(phaseConfig.bpm);
+            } else {
+              this.fireUpdateParameter('bpm', phaseConfig.bpm);
+            }
+          }
+          if (phaseConfig.acceleration) {
+            if (this.$refs.accelerationSlider) {
+              this.$refs.accelerationSlider.set(phaseConfig.acceleration);
+            } else {
+              this.fireUpdateParameter('acceleration', phaseConfig.acceleration);
+            }
+          }
+          if (phaseConfig.patternDuration) {
+            if (this.$refs.patternDurationSlider) {
+              this.$refs.patternDurationSlider.set(phaseConfig.patternDuration);
+            } else {
+              this.fireUpdateParameter('pattern-duration', phaseConfig.patternDuration);
+            }
+          }
+          if (phaseConfig.transitionDuration) {
+            if (this.$refs.transitionDurationSlider) {
+              this.$refs.transitionDurationSlider.set(phaseConfig.transitionDuration);
+            } else {
+              this.fireUpdateParameter('transition-duration', phaseConfig.transitionDuration);
+            }
+          }
+        });
+      }
+    },
+
     fireUpdateParameter (name, value) {
       this.$emit('update-parameters', {
         name,
@@ -652,48 +705,75 @@ export default {
 
     translateStrokeName (name) {
       const map = {
-        'down-forward': '下压-前倾',
-        'down-backward': '下压-后仰',
-        'back-thrust-down': '向后猛插-下压',
-        'back-thrust-down-swirl': '向后猛插-下压(附带旋涡)',
-        'thrust-forward': '向前猛插',
-        'thrust-forward-swirl': '向前猛插(附带旋涡)',
-        'lean-forward-thrust-down': '前倾-向下猛插',
-        'lean-forward-thrust-down-swirl': '前倾-向下猛插(附带旋涡)',
-        'diagonal-down-back': '对角-下压-后仰',
-        'diagonal-down-forward': '对角-下压-前倾',
-        'orbit-tease': '环绕-挑逗',
-        'left-right-tease': '左右摇摆-挑逗',
-        'forward-back-tease': '前后摇摆-挑逗',
-        'vortex-tease': '涡流-挑逗',
-        'swirl-tease': '旋涡-挑逗',
-        'forward-back-grind': '前后研磨',
-        'orbit-grind': '环绕研磨',
-        'short-low-roll-forward': '短促-低位侧倾-前倾',
-        'short-low-roll-backward': '短促-低位侧倾-后仰',
-        'short-mid-roll-forward': '短促-中位侧倾-前倾',
-        'short-mid-roll-backward': '短促-中位侧倾-后仰',
-        'short-high-roll-backward': '短促-高位侧倾-后仰',
-        'short-high-roll-forward': '短促-高位侧倾-前倾',
-        'long-stroke-1': '长距离抽插-1',
-        'long-stroke-2': '长距离抽插-2',
-        'long-stroke-3': '长距离抽插-3',
-        'long-stroke-4': '长距离抽插-4',
-        'long-stroke-5': '长距离抽插-5',
-        'grind-circular': '圆周研磨',
-        'grind-vortex': '涡流研磨',
-        'grind-forward-back': '前后研磨',
-        'grind-forward-back-phased': '相位式前后研磨',
-        'grind-forward-back-tilt': '倾斜前后研磨',
-        'grind-forward-tilt': '前倾研磨',
-        'tease-orbit-right': '挑逗-右环绕',
-        'tease-orbit-left': '挑逗-左环绕',
-        'tease-left-right-rock': '挑逗-左右摇摆',
-        'tease-down-back': '挑逗-下压-后仰',
-        'tease-back-swirl-right': '挑逗-后仰-右旋涡',
-        'tease-back-swirl-left': '挑逗-后仰-左旋涡',
-        'tease-up-down-circle-right': '挑逗-上下右圆周',
-        'tease-up-down-circle-left': '挑逗-上下左圆周'
+        // 原生动作：端庄优雅、通俗易懂的体感与技巧命名
+        'down-forward': '下压前倾深顶',
+        'down-backward': '下沉后仰回顶',
+        'back-thrust-down': '蓄力沉身重抽',
+        'back-thrust-down-swirl': '旋涡沉身重抽',
+        'thrust-forward': '直挺强力推刺',
+        'thrust-forward-swirl': '旋转直挺推刺',
+        'lean-forward-thrust-down': '俯冲下压顶撞',
+        'lean-forward-thrust-down-swirl': '俯冲旋转绞撞',
+        'diagonal-down-back': '斜向沉底深顶',
+        'diagonal-down-forward': '侧倾切入深顶',
+        'orbit-tease': '浅口环绕挑逗',
+        'left-right-tease': '左右摆动轻蹭',
+        'forward-back-tease': '浅进浅出探抚',
+        'vortex-tease': '浅层涡流轻捻',
+        'swirl-tease': '入口旋圈逗弄',
+        'forward-back-grind': '前后紧贴研磨',
+        'orbit-grind': '环形紧贴碾磨',
+        'short-low-roll-forward': '浅口前探微摇',
+        'short-low-roll-backward': '浅口后勾微摇',
+        'short-mid-roll-forward': '中段前推探试',
+        'short-mid-roll-backward': '中段回勾探试',
+        'short-high-roll-backward': '深底后仰挤压',
+        'short-high-roll-forward': '深底前倾紧抵',
+        'long-stroke-1': '长程舒缓抽送',
+        'long-stroke-2': '长程微摆穿透',
+        'long-stroke-3': '长程旋转深送',
+        'long-stroke-4': '疾风连贯抽送',
+        'long-stroke-5': '极速全贯穿冲刺',
+        'grind-circular': '圆周贴壁研磨',
+        'grind-vortex': '深层漩涡绞磨',
+        'grind-forward-back': '前后深度研磨',
+        'grind-forward-back-phased': '起伏前后研磨',
+        'grind-forward-back-tilt': '侧倾前后研磨',
+        'grind-forward-tilt': '前倾顶壁研磨',
+        'tease-orbit-right': '右旋环绕挑逗',
+        'tease-orbit-left': '左旋环绕挑逗',
+        'tease-left-right-rock': '左右轻摇挑逗',
+        'tease-down-back': '下沉仰首慢挑',
+        'tease-back-swirl-right': '仰身右旋挑弄',
+        'tease-back-swirl-left': '仰身左旋挑弄',
+        'tease-up-down-circle-right': '纵向右旋翻抚',
+        'tease-up-down-circle-left': '纵向左旋翻抚',
+
+        // 精选新增动作：端庄文雅、兼具画面感与直观理解的精炼译名
+        'pinnacle-quiver': '深处顶驻极频微颤',
+        'staircase-recede': '快拔缓进(欲擒故纵)',
+        'apex-hover-swirl': '深底悬停环绕研磨',
+        'pulse-jab-recoil': '脉冲突顶瞬即回弹',
+        'abyss-tease-hesitate': '浅口边缘慢抚游移',
+        'full-sprint-overdrive': '全行程巅峰冲刺',
+        'hyper-vortex-frenzy': '多轴涡流狂暴绞转',
+        'deep-slam-hammer': '深位强力重压顶撞',
+        'sawtooth-fury': '疾进慢退带旋抽送',
+        'cataclysm-surge': '六轴立体风暴冲程',
+        'serpentine-glide': '蛇形蜿蜒游离推进',
+        'corkscrew-inflow': '螺旋旋进旋出抽送',
+        'shallow-deep-wave': '二浅一深经典起伏',
+        'compass-probe': '四向多角度方位试探',
+        'mid-cruise-cadence': '恒速中程平稳巡航',
+        'pendulum-swing': '钟摆式大摆动抽送',
+        'figure-8-loop': '无限8字游走研磨',
+        'syncopated-pulse': '变奏切分节律抽送',
+        'butterfly-flutter': '浅层蝶翼轻柔抚触',
+        'funnel-spiral-grind': '漏斗渐深螺旋研磨',
+        'crescent-tilt-caress': '新月弧线侧向研磨',
+        'feather-float': '羽化悬浮舒缓慢游',
+        'breathing-ripple': '呼吸式长周期缓动',
+        'gentle-tremor-drift': '深处静驻余温微颤',
       };
       return map[name] || name;
     }

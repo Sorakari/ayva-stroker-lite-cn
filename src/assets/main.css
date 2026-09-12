@@ -260,11 +260,30 @@ button[disabled] {
   color: var(--ayva-text-color-blue);
 }
 
-.limits-container {
+.output-panel {
   position: absolute;
-  width: 245px;
+  width: 270px;
   left: 10px;
   top: 10px;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.output-panel::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
+  background: var(--background-color);
+}
+
+.output-panel::-webkit-scrollbar-thumb {
+  border-radius: var(--scrollbar-width);
+  background: var(--focus-color);
+}
+
+.limits-container {
+  position: relative;
+  width: 245px;
 }
 
 .free-play {

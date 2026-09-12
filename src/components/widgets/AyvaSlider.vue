@@ -160,7 +160,8 @@ export default {
     },
 
     set (...values) {
-      this.slider.set(values);
+      const vals = values.length === 1 && Array.isArray(values[0]) ? values[0] : values;
+      this.slider.set(vals);
     },
 
     get () {

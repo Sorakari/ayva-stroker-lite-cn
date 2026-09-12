@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import naive from 'naive-ui';
+import './lib/extended-strokes.js';
 import Main from './main.vue';
 import icons from './lib/icons.js';
 
